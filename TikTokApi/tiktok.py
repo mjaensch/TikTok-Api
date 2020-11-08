@@ -1049,7 +1049,6 @@ class TikTokApi:
         
 =======
         b = browser(api_url, **kwargs)
-        print(self.getData(b, proxy=proxy))
         return self.getData(b, proxy=proxy)["userInfo"]
 >>>>>>> getUserById() fixed
 
