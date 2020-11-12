@@ -1035,22 +1035,14 @@ class TikTokApi:
             maxCount,
             did,
         ) = self.__process_kwargs__(kwargs)
-<<<<<<< HEAD
         kwargs['custom_did'] = did
-=======
->>>>>>> getUserById() fixed
         query = {"userId": id, "language": language}
         api_url = "{}api/user/detail/?{}&{}".format(
             BASE_URL, self.__add_new_params__(), urlencode(query)
         )
-<<<<<<< HEAD
 
         return self.getData(url=api_url, **kwargs)["userInfo"]
         
-=======
-        b = browser(api_url, **kwargs)
-        return self.getData(b, proxy=proxy)["userInfo"]
->>>>>>> getUserById() fixed
 
     def getSuggestedUsersbyID(
         self, userId="6745191554350760966", count=30, **kwargs
