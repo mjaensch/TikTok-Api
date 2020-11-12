@@ -69,6 +69,9 @@ class TikTokApi:
             self.height = "1080"
 
         self.request_delay = kwargs.get("request_delay", None)
+        self.request_counter = 0
+        self.proxy_request_counter = 0
+        self.proxy_data_counter = 0
 
     @staticmethod
     def get_instance(**kwargs):
@@ -130,6 +133,9 @@ class TikTokApi:
 
         if self.proxy != None:
             proxy = self.proxy
+            self.proxy_request_counter = self.proxy_request_counter + 1
+        else:
+            self.request_counter = self.request_counter + 1
 
         if self.signer_url == None:
             verify_fp, did, signature = self.browser.sign_url(**kwargs)
@@ -158,8 +164,11 @@ class TikTokApi:
             },
             proxies=self.__format_proxy(proxy),
         )
+        if self.proxy != None:
+            self.proxy_data_counter = self.proxy_data_counter + len(r.content)
+        
         try:
-            return r.json()
+            jsonResult = r.json()
         except Exception as e:
             logging.error(e)
             logging.error(
@@ -167,6 +176,10 @@ class TikTokApi:
             )
             logging.info(r.text)
             raise Exception("Invalid Response")
+            
+        if 'statusCode' in jsonResult and jsonResult['statusCode'] == 10000:
+            raise Exception("StatusCode10000 exception")
+        return jsonResult
 
     def getBytes(self, **kwargs) -> bytes:
         """Returns bytes of a response from TikTok.
@@ -752,7 +765,7 @@ class TikTokApi:
             for t in res["itemList"]:
                 response.append(t)
 
-            if not res["hasMore"]:
+            if not res["hasMore"] or added == 0:
                 logging.info("TikTok isn't sending more TikToks beyond this point.")
                 return response
 
@@ -1007,6 +1020,29 @@ class TikTokApi:
         )
 
         return self.getData(url=api_url, **kwargs)["userInfo"]
+        
+    def getUserById(self, id, **kwargs) -> dict:
+        """Gets the full exposed user object
+        :param id: The user id.
+        :param language: The 2 letter code of the language to return.
+                         Note: Doesn't seem to have an affect.
+        :param proxy: The IP address of a proxy to make requests from.
+        """
+        (
+            region,
+            language,
+            proxy,
+            maxCount,
+            did,
+        ) = self.__process_kwargs__(kwargs)
+        kwargs['custom_did'] = did
+        query = {"userId": id, "language": language}
+        api_url = "{}api/user/detail/?{}&{}".format(
+            BASE_URL, self.__add_new_params__(), urlencode(query)
+        )
+
+        return self.getData(url=api_url, **kwargs)["userInfo"]
+        
 
     def getSuggestedUsersbyID(
         self, userId="6745191554350760966", count=30, **kwargs
